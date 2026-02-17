@@ -1,0 +1,874 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>The Super Sagan Activity Selector!</title>
+  <style>
+    :root {
+      --bg: #0b1220;
+      --card: #121b2e;
+      --muted: #9fb0d0;
+      --text: #e8eefc;
+      --accent: #6aa8ff;
+      --danger: #ff6a6a;
+      --ok: #4dd4a7;
+      --border: rgba(255,255,255,.10);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      background: radial-gradient(1200px 800px at 20% -10%, rgba(106,168,255,.35), transparent 60%),
+                  radial-gradient(900px 700px at 90% 10%, rgba(77,212,167,.25), transparent 55%),
+                  var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 18px;
+    }
+    .app { max-width: 900px; margin: 0 auto; }
+    header { margin-bottom: 14px; }
+    h1 { font-size: 20px; margin: 0; letter-spacing: .2px; }
+    .sub { color: var(--muted); font-size: 13px; margin-top: 6px; }
+
+    .card {
+      background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 16px;
+      box-shadow: 0 12px 30px rgba(0,0,0,.25);
+      backdrop-filter: blur(6px);
+    }
+    label { display:block; font-size: 12px; color: var(--muted); margin: 10px 0 6px; }
+    select, input[type="text"], input[type="password"] {
+      color: #111111;
+
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: rgba(0,0,0,.18);
+      color: var(--text);
+      outline: none;
+    }
+    select:focus, input:focus {
+      border-color: rgba(106,168,255,.65);
+      box-shadow: 0 0 0 3px rgba(106,168,255,.20);
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,.06);
+      color: var(--text);
+      cursor: pointer;
+      user-select: none;
+      font-weight: 700;
+    }
+    .btn:hover { background: rgba(255,255,255,.10); }
+    .btn.primary { background: rgba(106,168,255,.20); border-color: rgba(106,168,255,.45); }
+    .btn.primary:hover { background: rgba(106,168,255,.28); }
+    .btn.ok { background: rgba(77,212,167,.16); border-color: rgba(77,212,167,.40); }
+    .btn.ok:hover { background: rgba(77,212,167,.22); }
+    .btn.danger { background: rgba(255,106,106,.16); border-color: rgba(255,106,106,.40); }
+    .btn.danger:hover { background: rgba(255,106,106,.22); }
+    .btn.small { padding: 7px 10px; border-radius: 10px; font-size: 12px; }
+
+    .actions { display:flex; flex-wrap:wrap; gap:10px; margin-top: 12px; }
+    .actions.center { justify-content:center; }
+
+    .pill {
+      display:inline-flex;
+      padding: 4px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 12px;
+      background: rgba(255,255,255,.04);
+    }
+    .flex { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+    .divider { height:1px; background: rgba(255,255,255,.08); margin: 12px 0; }
+
+    .result {
+      margin-top: 14px;
+      padding: 14px;
+      border-radius: 14px;
+      border: 1px dashed rgba(255,255,255,.18);
+      background: rgba(0,0,0,.18);
+    }
+    .result .name { font-size: 18px; font-weight: 900; letter-spacing: .2px; margin-bottom: 6px; }
+    .result .meta { color: var(--muted); font-size: 13px; line-height:1.4; }
+
+    .table-wrap {
+      overflow:auto;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      background: rgba(0,0,0,.16);
+    }
+    table { width:100%; border-collapse:collapse; min-width: 680px; }
+    th, td { padding: 10px 12px; border-bottom: 1px solid rgba(255,255,255,.06); text-align:left; font-size: 13px; vertical-align:top; }
+    th { color: var(--muted); font-weight: 800; background: rgba(255,255,255,.04); position: sticky; top: 0; }
+    tr:hover td { background: rgba(255,255,255,.03); }
+    .muted { color: var(--muted); font-size: 13px; line-height:1.45; }
+
+    .modal-backdrop {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,.55);
+      display: none;
+      align-items:center;
+      justify-content:center;
+      padding: 18px;
+      z-index: 20;
+    }
+    .modal {
+      width: min(520px, 100%);
+      border-radius: 18px;
+      border: 1px solid var(--border);
+      background: linear-gradient(180deg, rgba(18,27,46,.98), rgba(12,18,32,.98));
+      box-shadow: 0 18px 60px rgba(0,0,0,.5);
+      padding: 16px;
+    }
+    .modal h2 { margin:0 0 6px; font-size:16px; }
+    .modal .top { display:flex; align-items:start; justify-content:space-between; gap: 12px; margin-bottom: 8px; }
+
+    .toast {
+      position: fixed; left: 50%; transform: translateX(-50%);
+      bottom: 16px;
+      background: rgba(0,0,0,.72);
+      border: 1px solid var(--border);
+      padding: 10px 12px;
+      border-radius: 999px;
+      color: var(--text);
+      font-size: 13px;
+      display:none;
+      z-index: 30;
+    }
+  
+    select option {
+      color: #000000;
+      background: #ffffff;
+    }
+
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <h1>The Super Sagan Activity Selector!</h1>
+      <div class="sub">Pick an Activity Type and then Press the Button for a Random Activity!</div>
+    </header>
+
+    <!-- MAIN -->
+    <section class="card" id="viewMain">
+      <div class="flex">
+        <div class="pill" id="pillCount">…</div>
+        <div class="pill" id="pillUpdated">…</div>
+      </div>
+
+      <label for="typeSelect">Activity Type</label>
+      <select id="typeSelect"></select>
+
+      <div class="actions">
+        <button class="btn primary" id="btnRandom">Pick Random Activity</button>
+      </div>
+
+      <div class="result">
+        <div class="name" id="resultName">—</div>
+        <div class="meta" id="resultMeta">Choose a type, then press “Pick Random Activity”.</div>
+        <button class="btn ok" id="btnSelect" style="margin-top:12px; display:none;">Select Activity</button>
+      </div>
+
+      <div class="divider"></div>
+      <div class="actions center">
+        <button class="btn" id="btnAdmin">Admin</button>
+        <button class="btn" id="btnLog">Tracking Log</button>
+      </div>
+    </section>
+
+    <!-- ADMIN -->
+    <section class="card" id="viewAdmin" style="display:none;">
+      <div class="flex">
+        <div>
+          <div style="font-weight:900;">Admin Panel</div>
+          <div class="sub">Manage activities (Add / Edit / Delete)</div>
+        </div>
+        <button class="btn" id="btnAdminClose">Close</button>
+      </div>
+
+      <div class="divider"></div>
+
+      <label>Search</label>
+      <input type="text" id="adminSearch" placeholder="Filter by name, type, or location…"/>
+
+      <div class="actions">
+        <button class="btn ok" id="btnAdd">Add New</button>
+        <button class="btn" id="btnExportActivities">Export JSON</button>
+        <button class="btn" id="btnReset">Reset to Spreadsheet</button>
+        <button class="btn danger" id="btnClearActivities">Clear All</button>
+        <button class="btn danger" id="btnClearLog">Clear Activity Log</button>
+      </div>
+
+      <div class="table-wrap" style="margin-top:12px;">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:30%;">Activity Name</th>
+              <th style="width:18%;">Type</th>
+              <th>Location</th>
+              <th style="width:170px;">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="adminTbody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- LOG -->
+    <section class="card" id="viewLog" style="display:none;">
+      <div class="flex">
+        <div>
+          <div style="font-weight:900;">Tracking Log</div>
+          <div class="sub">When you press “Select Activity”, it is recorded here (name, type, location, timestamp).</div>
+        </div>
+        <button class="btn" id="btnLogClose">Close</button>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="actions">
+        <button class="btn" id="btnExportLog">Export JSON</button>
+        
+      </div>
+
+      <div class="table-wrap" style="margin-top:12px;">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:28%;">Activity Name</th>
+              <th style="width:16%;">Type</th>
+              <th>Location</th>
+              <th style="width:210px;">Timestamp</th>
+            </tr>
+          </thead>
+          <tbody id="logTbody"></tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+
+
+  <canvas id="confettiCanvas" style="position:fixed; inset:0; width:100%; height:100%; pointer-events:none; z-index:25; display:none;"></canvas>
+  <!-- PASSCODE MODAL -->
+  <div class="modal-backdrop" id="passModal">
+    <div class="modal">
+      <div class="top">
+        <div>
+          <h2>Enter Admin Passcode</h2>
+        </div>
+        <button class="btn small" id="passClose">✕</button>
+      </div>
+      <label for="passInput">Passcode</label>
+      <input type="password" id="passInput" placeholder="••••"/>
+      <div class="actions">
+        <button class="btn primary" id="passEnter">Enter</button>
+      </div>
+      <div class="muted" id="passError" style="margin-top:10px; display:none; color: var(--danger);">
+        Incorrect passcode.
+      </div>
+    </div>
+  </div>
+
+  <!-- ADD/EDIT MODAL -->
+  <div class="modal-backdrop" id="editModal">
+    <div class="modal">
+      <div class="top">
+        <div>
+          <h2 id="editTitle">Add Activity</h2>
+          <div class="sub">Fields map to spreadsheet columns.</div>
+        </div>
+        <button class="btn small" id="editClose">✕</button>
+      </div>
+
+      <label for="editName">Activity Name</label>
+      <input type="text" id="editName" placeholder="e.g., Walk"/>
+
+      <label for="editType">Activity Type</label>
+      <select id="editType">
+        <option>Active</option>
+        <option>Play/Learn</option>
+      </select>
+
+      <label for="editLocation">Activity Location</label>
+      <input type="text" id="editLocation" placeholder="e.g., Neighborhood"/>
+
+      <div class="actions">
+        <button class="btn ok" id="editSave">Save</button>
+        <button class="btn" id="editCancel">Cancel</button>
+      </div>
+
+      <div class="muted" id="editHint" style="margin-top:10px;"></div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+<script>
+/** ===== Spreadsheet Seed Data (from Charlie Activities.xlsx) ===== */
+const SEED_DATA = [{"Activity Name": "Walk", "Activity Type": "Active", "Activity Location": "Neighborhood"}, {"Activity Name": "Playset", "Activity Type": "Active", "Activity Location": "Backyard"}, {"Activity Name": "Park", "Activity Type": "Active", "Activity Location": "Go to location"}, {"Activity Name": "Ninja Gym", "Activity Type": "Active", "Activity Location": "Go to location"}, {"Activity Name": "Trampoline", "Activity Type": "Active", "Activity Location": "Living room"}, {"Activity Name": "Ring Fit", "Activity Type": "Active", "Activity Location": "Playroom (by toy chest)"}, {"Activity Name": "Exercise Machine", "Activity Type": "Active", "Activity Location": "Living room"}, {"Activity Name": "Exercise Class", "Activity Type": "Active", "Activity Location": "Living room"}, {"Activity Name": "Exercise Ball", "Activity Type": "Active", "Activity Location": "Living room"}, {"Activity Name": "Sports (Tee ball, Football, etc)", "Activity Type": "Active", "Activity Location": "Backyard"}, {"Activity Name": "Mario Guess Who", "Activity Type": "Play/Learn", "Activity Location": "Charlie's room (closet)"}, {"Activity Name": "Mario Maze Game", "Activity Type": "Play/Learn", "Activity Location": "Charlie's room (closet)"}, {"Activity Name": "Finger Paint", "Activity Type": "Play/Learn", "Activity Location": "Charlie's room (closet)"}, {"Activity Name": "Acrylic Paint", "Activity Type": "Play/Learn", "Activity Location": "Charlie's room (closet)"}, {"Activity Name": "Candy Land", "Activity Type": "Play/Learn", "Activity Location": "Charlie's room (closet)"}, {"Activity Name": "Butterfly Garden", "Activity Type": "Play/Learn", "Activity Location": "Charlie's room (closet)"}, {"Activity Name": "Circuit board", "Activity Type": "Play/Learn", "Activity Location": "Charlie's room (closet)"}, {"Activity Name": "Scavenger Hunt", "Activity Type": "Play/Learn", "Activity Location": "Charlie's room (closet)"}, {"Activity Name": "Charades for Kids", "Activity Type": "Play/Learn", "Activity Location": "Charlie's room (closet)"}, {"Activity Name": "Ticket to Ride", "Activity Type": "Play/Learn", "Activity Location": "Charlie's room (closet)"}, {"Activity Name": "Monopoly Junior", "Activity Type": "Play/Learn", "Activity Location": "Charlie's room (closet)"}, {"Activity Name": "Pinball", "Activity Type": "Play/Learn", "Activity Location": "Charlie's room (closet)"}, {"Activity Name": "Architect Smart House", "Activity Type": "Play/Learn", "Activity Location": "Charlie's room (closet)"}, {"Activity Name": "Mechanical Hand", "Activity Type": "Play/Learn", "Activity Location": "Charlie's room (closet)"}, {"Activity Name": "KidZRobotix", "Activity Type": "Play/Learn", "Activity Location": "Charlie's room (closet)"}, {"Activity Name": "Marble Run", "Activity Type": "Play/Learn", "Activity Location": "Charlie's room (organizer)"}, {"Activity Name": "Magnet Tiles", "Activity Type": "Play/Learn", "Activity Location": "Charlie's room (organizer)"}, {"Activity Name": "Lite Bright", "Activity Type": "Play/Learn", "Activity Location": "Charlie's room (organizer)"}, {"Activity Name": "Kitchen set", "Activity Type": "Play/Learn", "Activity Location": "Charlie's room (organizer)"}, {"Activity Name": "Race Car Track", "Activity Type": "Play/Learn", "Activity Location": "Charlie's room (organizer)"}, {"Activity Name": "Train Set", "Activity Type": "Play/Learn", "Activity Location": "Charlie's room (organizer)"}, {"Activity Name": "Light Blocks", "Activity Type": "Play/Learn", "Activity Location": "Charlie's room (organizer)"}, {"Activity Name": "Cash Register", "Activity Type": "Play/Learn", "Activity Location": "Charlie's room (organizer)"}, {"Activity Name": "Art and Stickers", "Activity Type": "Play/Learn", "Activity Location": "Charlie's room (organizer)"}, {"Activity Name": "Art Time", "Activity Type": "Play/Learn", "Activity Location": "Charlie's room (desk)"}, {"Activity Name": "Life ", "Activity Type": "Play/Learn", "Activity Location": "Playroom (by table)"}, {"Activity Name": "Life Adventures ", "Activity Type": "Play/Learn", "Activity Location": "Playroom (by table)"}, {"Activity Name": "Set", "Activity Type": "Play/Learn", "Activity Location": "Playroom (by table)"}, {"Activity Name": "Playing cards", "Activity Type": "Play/Learn", "Activity Location": "Playroom (by table)"}, {"Activity Name": "Play-doh", "Activity Type": "Play/Learn", "Activity Location": "Playroom (by table)"}, {"Activity Name": "Science Bingo", "Activity Type": "Play/Learn", "Activity Location": "Playroom (by table)"}, {"Activity Name": "Tic-tac-toe", "Activity Type": "Play/Learn", "Activity Location": "Playroom (by table)"}, {"Activity Name": "Connect Four", "Activity Type": "Play/Learn", "Activity Location": "Playroom (by table)"}, {"Activity Name": "Science Set", "Activity Type": "Play/Learn", "Activity Location": "Playroom (by table)"}, {"Activity Name": "KidzLabs", "Activity Type": "Play/Learn", "Activity Location": "Playroom (by table)"}, {"Activity Name": "Scrabble", "Activity Type": "Play/Learn", "Activity Location": "Playroom (by table)"}, {"Activity Name": "UNO", "Activity Type": "Play/Learn", "Activity Location": "Playroom (by table)"}, {"Activity Name": "Air Hockey", "Activity Type": "Play/Learn", "Activity Location": "Playroom (by table)"}, {"Activity Name": "Snakes & Ladders", "Activity Type": "Play/Learn", "Activity Location": "Playroom (by table)"}, {"Activity Name": "Twister", "Activity Type": "Play/Learn", "Activity Location": "Playroom (by table)"}, {"Activity Name": "Lego", "Activity Type": "Play/Learn", "Activity Location": "Playroom (by toy chest)"}, {"Activity Name": "Toy instruments", "Activity Type": "Play/Learn", "Activity Location": "Playroom (by toy chest)"}, {"Activity Name": "Guitar w/ sheet music", "Activity Type": "Play/Learn", "Activity Location": "Playroom (by guitars)"}];
+
+/** ===== Storage Keys ===== */
+const STORAGE_KEY = "super_sagan_activities_v1";
+const META_KEY = "super_sagan_meta_v1";
+const LOG_KEY = "super_sagan_log_v1";
+const ADMIN_PASSCODE = "0819";
+
+/** ===== Helpers ===== */
+function nowStamp() { return new Date().toLocaleString(); }
+function toast(msg) {
+  const el = document.getElementById("toast");
+  el.textContent = msg;
+  el.style.display = "block";
+  clearTimeout(window.__toastT);
+  window.__toastT = setTimeout(() => el.style.display = "none", 2200);
+}
+function normalizeRecord(r) {
+  return {
+    name: String(r["Activity Name"] ?? r.name ?? "").trim(),
+    type: String(r["Activity Type"] ?? r.type ?? "").trim(),
+    location: String(r["Activity Location"] ?? r.location ?? "").trim()
+  };
+}
+
+/** ===== Activities Data ===== */
+function seedActivitiesIfMissing() {
+  if (localStorage.getItem(STORAGE_KEY)) return;
+  const normalized = SEED_DATA.map(normalizeRecord).filter(x => x.name);
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(normalized));
+  localStorage.setItem(META_KEY, JSON.stringify({ source:"spreadsheet", updatedAt: nowStamp() }));
+}
+function loadActivities() {
+  seedActivitiesIfMissing();
+  try {
+    const arr = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]") || [];
+    return arr.map(normalizeRecord).filter(x => x.name);
+  } catch {
+    localStorage.removeItem(STORAGE_KEY);
+    seedActivitiesIfMissing();
+    return loadActivities();
+  }
+}
+function saveActivities(list, source="admin") {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+  localStorage.setItem(META_KEY, JSON.stringify({ source, updatedAt: nowStamp() }));
+}
+function getMeta() {
+  try { return JSON.parse(localStorage.getItem(META_KEY) || "{}"); }
+  catch { return {}; }
+}
+
+/** ===== Log Data ===== */
+function seedLogIfMissing() {
+  if (localStorage.getItem(LOG_KEY)) return;
+  const sample = [{
+    name: "Sample Test Activity",
+    type: "Active",
+    location: "Test Location",
+    ts: nowStamp()
+  }];
+  localStorage.setItem(LOG_KEY, JSON.stringify(sample));
+}
+function loadLog() {
+  seedLogIfMissing();
+  try { return JSON.parse(localStorage.getItem(LOG_KEY) || "[]") || []; }
+  catch { localStorage.removeItem(LOG_KEY); seedLogIfMissing(); return loadLog(); }
+}
+function saveLog(entries) {
+  localStorage.setItem(LOG_KEY, JSON.stringify(entries));
+}
+function addLogEntry(rec) {
+  if (!rec) return;
+  const entries = loadLog();
+  entries.unshift({
+    name: rec.name,
+    type: rec.type,
+    location: rec.location || "",
+    ts: nowStamp()
+  });
+  if (entries.length > 500) entries.length = 500;
+  saveLog(entries);
+}
+
+/** ===== View State ===== */
+const viewMain = document.getElementById("viewMain");
+const viewAdmin = document.getElementById("viewAdmin");
+const viewLog  = document.getElementById("viewLog");
+
+function showView(name) {
+  viewMain.style.display  = (name === "main") ? "block" : "none";
+  viewAdmin.style.display = (name === "admin") ? "block" : "none";
+  viewLog.style.display   = (name === "log") ? "block" : "none";
+  if (name === "log") renderLog();
+  if (name === "admin") renderAdminTable();
+}
+
+/** ===== Main UI ===== */
+let activities = loadActivities();
+let lastPicked = null;
+
+const typeSelect = document.getElementById("typeSelect");
+const resultName = document.getElementById("resultName");
+const resultMeta = document.getElementById("resultMeta");
+const btnSelect  = document.getElementById("btnSelect");
+const pillCount  = document.getElementById("pillCount");
+const pillUpdated= document.getElementById("pillUpdated");
+
+function uniqueTypes(list) {
+  return Array.from(new Set(list.map(x => x.type).filter(Boolean))).sort();
+}
+function renderTypeSelect() {
+  const types = uniqueTypes(activities);
+  typeSelect.innerHTML = "";
+  for (const t of types) {
+    const opt = document.createElement("option");
+    opt.value = t;
+    opt.textContent = t;
+    typeSelect.appendChild(opt);
+  }
+  if (!types.length) {
+    const opt = document.createElement("option");
+    opt.value = "";
+    opt.textContent = "— No activities —";
+    typeSelect.appendChild(opt);
+  }
+}
+function updatePills() {
+  pillCount.textContent = `${activities.length} activities`;
+  const meta = getMeta();
+  pillUpdated.textContent = meta.updatedAt ? `Updated: ${meta.updatedAt}` : "Updated: —";
+}
+function pickRandom(type) {
+  const list = activities.filter(a => a.type === type);
+  if (!list.length) return null;
+  return list[Math.floor(Math.random()*list.length)];
+}
+function showResult(rec) {
+  if (!rec) {
+    resultName.textContent = "No match";
+    resultMeta.textContent = "Add activities in Admin, or reset to spreadsheet.";
+    btnSelect.style.display = "none";
+    return;
+  }
+  resultName.textContent = rec.name;
+  resultMeta.textContent = `Type: ${rec.type} • Location: ${rec.location || "—"}`;
+  btnSelect.style.display = "inline-flex";
+}
+
+/** ===== Main Events ===== */
+document.getElementById("btnRandom").addEventListener("click", () => {
+  const t = typeSelect.value;
+  const rec = pickRandom(t);
+  lastPicked = rec;
+  showResult(rec);
+});
+
+btnSelect.addEventListener("click", () => {
+  if (!lastPicked) { toast("No activity selected yet."); return; }
+  addLogEntry(lastPicked);
+  spawnConfettiBurst();
+  playTaDa();
+  toast("Activity added to Tracking Log.");
+});
+
+document.getElementById("btnLog").addEventListener("click", () => showView("log"));
+
+/** ===== Passcode / Admin ===== */
+const passModal = document.getElementById("passModal");
+const passInput = document.getElementById("passInput");
+const passError = document.getElementById("passError");
+
+function openPassModal() {
+  passInput.value = "";
+  passError.style.display = "none";
+  passModal.style.display = "flex";
+  setTimeout(() => passInput.focus(), 0);
+}
+function closePassModal() { passModal.style.display = "none"; }
+
+document.getElementById("btnAdmin").addEventListener("click", openPassModal);
+document.getElementById("passClose").addEventListener("click", closePassModal);
+passModal.addEventListener("click", (e) => { if (e.target === passModal) closePassModal(); });
+
+function enterAdmin() {
+  if (passInput.value === ADMIN_PASSCODE) {
+    closePassModal();
+    showView("admin");
+    toast("Admin unlocked.");
+  } else {
+    passError.style.display = "block";
+    passInput.select();
+  }
+}
+document.getElementById("passEnter").addEventListener("click", enterAdmin);
+passInput.addEventListener("keydown", (e) => { if (e.key === "Enter") enterAdmin(); });
+
+document.getElementById("btnAdminClose").addEventListener("click", () => showView("main"));
+document.getElementById("btnLogClose").addEventListener("click", () => showView("main"));
+
+/** ===== Log UI ===== */
+const logTbody = document.getElementById("logTbody");
+
+function renderLog() {
+  const entries = loadLog();
+  logTbody.innerHTML = "";
+  if (!entries.length) {
+    const tr = document.createElement("tr");
+    const td = document.createElement("td");
+    td.colSpan = 4;
+    td.className = "muted";
+    td.textContent = "No activity picks logged yet.";
+    tr.appendChild(td);
+    logTbody.appendChild(tr);
+    return;
+  }
+  for (const e of entries) {
+    const tr = document.createElement("tr");
+    const tdN = document.createElement("td"); tdN.textContent = e.name;
+    const tdT = document.createElement("td"); tdT.textContent = e.type;
+    const tdL = document.createElement("td"); tdL.textContent = e.location;
+    const tdS = document.createElement("td"); tdS.textContent = e.ts;
+    tr.appendChild(tdN); tr.appendChild(tdT); tr.appendChild(tdL); tr.appendChild(tdS);
+    logTbody.appendChild(tr);
+  }
+}
+
+document.getElementById("btnClearLog").addEventListener("click", () => {
+  if (!confirm("Clear the entire tracking log?")) return;
+  saveLog([]);
+  renderLog();
+  toast("Log cleared.");
+});
+
+document.getElementById("btnExportLog").addEventListener("click", () => {
+  const blob = new Blob([JSON.stringify(loadLog(), null, 2)], {type:"application/json"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "activity-tracking-log.json";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+});
+
+/** ===== Admin UI ===== */
+const adminTbody = document.getElementById("adminTbody");
+const adminSearch = document.getElementById("adminSearch");
+const editModal = document.getElementById("editModal");
+const editTitle = document.getElementById("editTitle");
+const editName = document.getElementById("editName");
+const editType = document.getElementById("editType");
+const editLocation = document.getElementById("editLocation");
+const editHint = document.getElementById("editHint");
+
+let editIndex = null;
+
+function openEdit(mode, index=null) {
+  editIndex = index;
+  const isEdit = mode === "edit";
+  editTitle.textContent = isEdit ? "Edit Activity" : "Add Activity";
+  editHint.textContent = "Changes save locally in this browser.";
+  if (isEdit) {
+    const a = activities[index];
+    editName.value = a.name;
+    editType.value = a.type || "Active";
+    editLocation.value = a.location || "";
+  } else {
+    editName.value = "";
+    editType.value = "Active";
+    editLocation.value = "";
+  }
+  editModal.style.display = "flex";
+  setTimeout(() => editName.focus(), 0);
+}
+function closeEdit() { editModal.style.display = "none"; }
+
+document.getElementById("editClose").addEventListener("click", closeEdit);
+document.getElementById("editCancel").addEventListener("click", closeEdit);
+editModal.addEventListener("click", (e) => { if (e.target === editModal) closeEdit(); });
+
+document.getElementById("editSave").addEventListener("click", () => {
+  const name = editName.value.trim();
+  const type = editType.value.trim();
+  const location = editLocation.value.trim();
+  if (!name) { toast("Activity Name is required."); editName.focus(); return; }
+  if (editIndex === null) activities.push({name, type, location});
+  else activities[editIndex] = {name, type, location};
+  saveActivities(activities, "admin");
+  renderAll();
+  renderAdminTable();
+  closeEdit();
+  toast("Saved.");
+});
+
+document.getElementById("btnAdd").addEventListener("click", () => openEdit("add"));
+
+function renderAdminTable() {
+  const q = (adminSearch.value || "").trim().toLowerCase();
+  adminTbody.innerHTML = "";
+  const listWithIndex = activities.map((a,i) => ({a,i}));
+  const filtered = q ? listWithIndex.filter(x => (x.a.name + " " + x.a.type + " " + x.a.location).toLowerCase().includes(q)) : listWithIndex;
+
+  if (!filtered.length) {
+    const tr = document.createElement("tr");
+    const td = document.createElement("td");
+    td.colSpan = 4;
+    td.className = "muted";
+    td.textContent = "No activities found.";
+    tr.appendChild(td);
+    adminTbody.appendChild(tr);
+    return;
+  }
+
+  for (const x of filtered) {
+    const tr = document.createElement("tr");
+
+    const tdName = document.createElement("td"); tdName.textContent = x.a.name;
+    const tdType = document.createElement("td"); tdType.textContent = x.a.type;
+    const tdLoc  = document.createElement("td"); tdLoc.textContent = x.a.location;
+
+    const tdAct  = document.createElement("td");
+    const bE = document.createElement("button");
+    bE.className = "btn small";
+    bE.textContent = "Edit";
+    bE.addEventListener("click", () => openEdit("edit", x.i));
+
+    const bD = document.createElement("button");
+    bD.className = "btn small danger";
+    bD.textContent = "Delete";
+    bD.style.marginLeft = "8px";
+    bD.addEventListener("click", () => {
+      if (!confirm(`Delete "${x.a.name}"?`)) return;
+      activities.splice(x.i, 1);
+      saveActivities(activities, "admin");
+      renderAll();
+      renderAdminTable();
+      toast("Deleted.");
+    });
+
+    tdAct.appendChild(bE);
+    tdAct.appendChild(bD);
+
+    tr.appendChild(tdName);
+    tr.appendChild(tdType);
+    tr.appendChild(tdLoc);
+    tr.appendChild(tdAct);
+    adminTbody.appendChild(tr);
+  }
+}
+
+adminSearch.addEventListener("input", renderAdminTable);
+
+document.getElementById("btnClearActivities").addEventListener("click", () => {
+  if (!confirm("Clear ALL activities?")) return;
+  activities = [];
+  saveActivities(activities, "admin-clear");
+  renderAll();
+  renderAdminTable();
+  toast("Cleared.");
+});
+
+document.getElementById("btnExportActivities").addEventListener("click", () => {
+  const blob = new Blob([JSON.stringify(activities, null, 2)], {type:"application/json"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "super-sagan-activities.json";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+});
+
+document.getElementById("btnReset").addEventListener("click", () => {
+  if (!confirm("Reset activities back to the spreadsheet seed data? This will overwrite your local changes.")) return;
+  localStorage.removeItem(STORAGE_KEY);
+  localStorage.removeItem(META_KEY);
+  activities = loadActivities();
+  renderAll();
+  renderAdminTable();
+  toast("Reset to spreadsheet.");
+});
+
+
+/** ===== Fun: Confetti + Sound (Mr. Charlie Mode) ===== */
+const confettiCanvas = document.getElementById("confettiCanvas");
+const confettiCtx = confettiCanvas.getContext("2d");
+let confettiParticles = [];
+let confettiAnimating = false;
+
+function resizeConfettiCanvas() {
+  // Use devicePixelRatio for crispness
+  const dpr = window.devicePixelRatio || 1;
+  confettiCanvas.width = Math.floor(window.innerWidth * dpr);
+  confettiCanvas.height = Math.floor(window.innerHeight * dpr);
+  confettiCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+window.addEventListener("resize", resizeConfettiCanvas);
+
+function rand(min, max) { return Math.random() * (max - min) + min; }
+
+function spawnConfettiBurst() {
+  resizeConfettiCanvas();
+  confettiCanvas.style.display = "block";
+
+  const w = window.innerWidth;
+  const h = window.innerHeight;
+
+  // Burst from around the result area (approx center-ish)
+  const originX = w * 0.5;
+  const originY = h * 0.35;
+
+  const colors = [
+    "#ff4d4d", "#ff9f1c", "#ffd60a", "#4dd4a7", "#6aa8ff",
+    "#b26bff", "#ff66c4", "#ffffff"
+  ];
+
+  const count = 180; // fun but not insane
+  confettiParticles = [];
+  for (let i = 0; i < count; i++) {
+    const angle = rand(-Math.PI, 0); // upward spread
+    const speed = rand(6, 16);
+    confettiParticles.push({
+      x: originX + rand(-20, 20),
+      y: originY + rand(-10, 10),
+      vx: Math.cos(angle) * speed + rand(-2, 2),
+      vy: Math.sin(angle) * speed - rand(0, 4),
+      g: rand(0.18, 0.30),
+      r: rand(3, 7),
+      w: rand(6, 12),
+      h: rand(6, 14),
+      rot: rand(0, Math.PI),
+      vr: rand(-0.25, 0.25),
+      color: colors[Math.floor(Math.random() * colors.length)],
+      life: rand(55, 95)
+    });
+  }
+
+  if (!confettiAnimating) {
+    confettiAnimating = true;
+    requestAnimationFrame(stepConfetti);
+  }
+}
+
+function stepConfetti() {
+  const ctx = confettiCtx;
+  ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+
+  let alive = 0;
+  for (const p of confettiParticles) {
+    if (p.life <= 0) continue;
+    alive++;
+
+    p.vy += p.g;
+    p.x += p.vx;
+    p.y += p.vy;
+    p.rot += p.vr;
+    p.life -= 1;
+
+    // draw
+    ctx.save();
+    ctx.translate(p.x, p.y);
+    ctx.rotate(p.rot);
+    ctx.fillStyle = p.color;
+    ctx.globalAlpha = Math.max(0, Math.min(1, p.life / 95));
+    ctx.fillRect(-p.w/2, -p.h/2, p.w, p.h);
+    ctx.restore();
+  }
+
+  if (alive > 0) {
+    requestAnimationFrame(stepConfetti);
+  } else {
+    confettiAnimating = false;
+    confettiCanvas.style.display = "none";
+    confettiCtx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+  }
+}
+
+// Simple cheerful “ta‑da” sound using Web Audio (no external files)
+let audioCtx = null;
+function playTaDa() {
+  try {
+    audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+
+    const now = audioCtx.currentTime;
+
+    const master = audioCtx.createGain();
+    master.gain.setValueAtTime(0.0001, now);
+    master.gain.exponentialRampToValueAtTime(0.35, now + 0.01);
+    master.gain.exponentialRampToValueAtTime(0.0001, now + 0.55);
+    master.connect(audioCtx.destination);
+
+    // Three quick notes + sparkle
+    const notes = [523.25, 659.25, 783.99]; // C5 E5 G5
+    notes.forEach((freq, i) => {
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = "triangle";
+      osc.frequency.setValueAtTime(freq, now + i * 0.06);
+      gain.gain.setValueAtTime(0.0001, now + i * 0.06);
+      gain.gain.exponentialRampToValueAtTime(0.20, now + i * 0.06 + 0.01);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + i * 0.06 + 0.18);
+      osc.connect(gain);
+      gain.connect(master);
+      osc.start(now + i * 0.06);
+      osc.stop(now + i * 0.06 + 0.20);
+    });
+
+    // Sparkle noise
+    const bufferSize = Math.floor(audioCtx.sampleRate * 0.18);
+    const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) {
+      data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (bufferSize / 6));
+    }
+    const noise = audioCtx.createBufferSource();
+    noise.buffer = buffer;
+
+    const biquad = audioCtx.createBiquadFilter();
+    biquad.type = "highpass";
+    biquad.frequency.setValueAtTime(2500, now);
+
+    const ng = audioCtx.createGain();
+    ng.gain.setValueAtTime(0.0001, now);
+    ng.gain.exponentialRampToValueAtTime(0.18, now + 0.01);
+    ng.gain.exponentialRampToValueAtTime(0.0001, now + 0.18);
+
+    noise.connect(biquad);
+    biquad.connect(ng);
+    ng.connect(master);
+    noise.start(now);
+    noise.stop(now + 0.18);
+  } catch (e) {
+    // If audio fails (rare), ignore quietly.
+  }
+}
+
+
+/** ===== Boot ===== */
+function renderAll() {
+  renderTypeSelect();
+  updatePills();
+  // keep selection valid
+  if (![...typeSelect.options].some(o => o.value === typeSelect.value)) typeSelect.selectedIndex = 0;
+}
+renderAll();
+updatePills();
+// Ensure sample log row exists + renders when opening log
+seedLogIfMissing();
+</script>
+</body>
+</html>
